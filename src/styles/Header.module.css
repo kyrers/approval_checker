@@ -1,0 +1,56 @@
+.header {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    max-width: var(--max-width);
+    width: 100%;
+}
+
+.header button {
+    color: black;
+    width: 10rem;
+    height: 1.5rem;
+    background: var(--button-color);
+    border: none;
+    border-radius: var(--buton-border);
+    cursor: pointer;
+}
+
+.header button:hover {
+    background: var(--button-hover-color);
+}
+
+.headerInfo {
+    display: flex;
+    flex-direction: row;
+}
+
+.headerWallet {
+    display: flex;
+    flex-direction: column;
+}
+
+.headerText {
+    color: var(--header-text-color);
+    text-align: center;
+    font-family: Roboto Bold;
+
+}
+
+@media (max-width: 793px) {
+
+    .header {
+        justify-content: center;
+        text-align: center;
+        flex-direction: column;
+        word-break: break-word;
+    }
+
+    .headerInfo {
+        flex-direction: column;
+        margin-bottom: 1rem;
+    }
+}

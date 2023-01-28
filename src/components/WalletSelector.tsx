@@ -1,4 +1,4 @@
-import styles from "../styles/Home.module.css";
+import styles from "../styles/WalletSelector.module.css";
 import { Dispatch, SetStateAction } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { installWalletElement } from "./AlertScreen";
@@ -31,7 +31,7 @@ export default function WalletSelector({ setShowWalletSelector, displayAlert }: 
         return (
             <div className={styles.walletSelector} onClick={() => setShowWalletSelector(false)}>
                 <div >
-                    <h1 className={styles.centeredText && styles.headerText}>Disconnect Wallet?</h1>
+                    <h1 className={styles.walletSelectorText}>Disconnect Wallet?</h1>
                     <button type="button" key="disconnect_wallet" onClick={() => onDisconnect()}>
                         Disconnect
                     </button>
@@ -43,7 +43,7 @@ export default function WalletSelector({ setShowWalletSelector, displayAlert }: 
     return (
         <div className={styles.walletSelector} onClick={() => setShowWalletSelector(false)}>
             <div >
-                <h1 className={styles.centeredText && styles.headerText}>Choose Wallet</h1>
+                <h1 className={styles.walletSelectorText}>Choose Wallet</h1>
                 {
                     connectors.map((connector: any) => {
                         return (

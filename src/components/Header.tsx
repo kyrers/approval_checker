@@ -1,4 +1,4 @@
-import styles from "../styles/Home.module.css"
+import styles from "../styles/Header.module.css"
 import { Dispatch, SetStateAction } from "react";
 import { useAccount } from "wagmi";
 
