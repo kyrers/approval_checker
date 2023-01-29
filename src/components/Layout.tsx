@@ -4,6 +4,7 @@ import { mainnet } from "wagmi/chains";
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { WagmiConfig } from "wagmi";
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";
+import Head from "next/head";
 import useIsMounted from "../hooks/useIsMounted";
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -35,6 +36,12 @@ export default function Layout({ children }: { children: ReactNode }) {
 
     return (
         <WagmiConfig client={wagmiClient}>
+            <Head>
+                <title>What have I approved?</title>
+                <meta name="description" content="Check your wallet approvals" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <link rel="icon" href="/favicon.ico" />
+            </Head>
             {children}
         </WagmiConfig>
     );
