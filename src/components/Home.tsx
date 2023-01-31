@@ -4,6 +4,7 @@ import { useNetwork } from "wagmi";
 import useLatestBlock from "@/hooks/useLatestBlock";
 import WalletSelector from "./WalletSelector";
 import Header from "./Header";
+import MainPanel from "./MainPanel";
 
 export default function Home() {
     const [showAlert, setShowAlert] = useState(false);
@@ -23,14 +24,7 @@ export default function Home() {
         <div className={styles.home}>
             {showWalletSelector ? <WalletSelector setShowWalletSelector={setShowWalletSelector} displayAlert={displayAlert} /> : null}
             <Header setShowWalletSelector={setShowWalletSelector} />
-            {isLoading ?
-                <p>Loading</p>
-                :
-                isError ?
-                    <p>Error</p>
-                    :
-                    <p>{latestBlock!}</p>
-            }
+            <MainPanel />
             {/*<MainPanel displayAlert={displayAlert} />
           <AlertScreen show={showAlert} element={alertElement} setShow={setShowAlert} />
     <Footer />*/}
