@@ -1,8 +1,9 @@
+import styles from "../styles/MainPanel.module.css";
 import { Tab, Tabs } from "react-bootstrap";
 
 export default function MainPanel() {
     return (
-        <Tabs defaultActiveKey="profile" id="uncontrolled-tab-example" className="mb-3">
+        <Tabs defaultActiveKey="ERC20" id="approval-category-tab" className={styles.mainPanel}>
             <Tab eventKey="ERC20" title="ERC20">
                 ERC20 Table
             </Tab>
