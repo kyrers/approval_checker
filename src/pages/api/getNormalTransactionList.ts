@@ -1,4 +1,4 @@
-import { getAccountNormalTransactionListApiUrl, getChainAPIKey, getLatestBlockApiUrl } from "@/utils/shared";
+import { getAccountNormalTransactionListApiUrl, getChainAPIKey } from "@/utils/shared";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

@@ -24,3 +24,12 @@ export const getAccountNormalTransactionListApiUrl = (chainId: any) => {
             return `${process.env.NEXT_PUBLIC_ETHERSCAN_ACCOUNT_NORMAL_TRANSACTIONS_URL}`;
     };
 };
+
+export const getTransactionByHashApiUrl = (chainId: any) => {
+    switch (chainId) {
+        case "10":
+            return `${process.env.NEXT_PUBLIC_OPTISCAN_GETH_TRANSACTION_RECEIPT_BY_HASH}`;
+        default:
+            return `${process.env.NEXT_PUBLIC_ETHERSCAN_GETH_TRANSACTION_RECEIPT_BY_HASH}`;
+    };
+};

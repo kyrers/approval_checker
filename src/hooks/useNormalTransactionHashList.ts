@@ -3,7 +3,6 @@ import useSWR from "swr";
 export default function useNormalTransactionHashList(latestBlock: any, chainId: any, address: any) {
     const fetcher = (...args: [any]) => {
         if (undefined !== latestBlock && undefined !== chainId) {
-            console.log("FETCHING")
             return fetch(...args).then((res) => res.json());
         }
 
@@ -26,4 +25,4 @@ export const formatResponse = (txArray: []) => {
     });
 
     return hashArray;
-}
+};
