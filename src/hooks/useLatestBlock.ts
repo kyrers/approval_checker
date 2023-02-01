@@ -5,7 +5,7 @@ type Data = {
     jsonrpc: string;
     id: string;
     result: string;
-}
+};
 
 export default function useLatestBlock(chainId: any) {
     const fetcher = (...args: [any]) => fetch(...args).then((res) => res.json());
