@@ -19,8 +19,6 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         revalidateOnFocus: false,
         revalidateOnReconnect: false
     });
-
-    console.log("DATA", data)
-
+    
     return { erc20Approvals: data, isLoading, isError: error };
 };
