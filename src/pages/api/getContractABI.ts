@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 batch.map(async (address) => {
                     const fullURL = `${partialURL}&address=${address}&apikey=${correctAPIKey}`;
                     const data = await fetch(fullURL).then((response) => response.json());
-                    response.push(data);
+                    response.push({ address: address, data: data });
                 })
             );
         }

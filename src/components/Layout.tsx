@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { createClient, configureChains } from "wagmi";
-import { mainnet } from "wagmi/chains";
+import { mainnet, optimism } from "wagmi/chains";
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { WagmiConfig } from "wagmi";
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";
@@ -11,8 +11,11 @@ export default function Layout({ children }: { children: ReactNode }) {
     const { mounted } = useIsMounted();
 
     const { chains, provider, webSocketProvider } = configureChains(
-        [mainnet],
-        [alchemyProvider({ apiKey: process.env.NEXT_PUBLIC_ALCHEMY_KEY ?? "" })]
+        [mainnet, optimism],
+        [
+            alchemyProvider({ apiKey: process.env.NEXT_PUBLIC_ALCHEMY_KEY ?? "" }),
+            alchemyProvider({ apiKey: process.env.NEXT_PUBLIC_OPTIMISM_ALCHEMY_KEY ?? "" })
+        ]
     );
 
     const wagmiClient = createClient({

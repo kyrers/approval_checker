@@ -1,3 +1,12 @@
+export const getNetworkKey = (chainId: any) => {
+    switch (chainId) {
+        case "10":
+            return process.env.NEXT_PUBLIC_OPTIMISM_ALCHEMY_KEY;
+        default:
+            return process.env.NEXT_PUBLIC_ALCHEMY_KEY;
+    };
+};
+
 export const getChainAPIKey = (chainId: any) => {
     switch (chainId) {
         case "10":

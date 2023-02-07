@@ -1,6 +1,15 @@
 import { ALL_APPROVAL_TOPICS } from "@/utils/constants";
+import { getNetworkKey } from "@/utils/shared";
+import { Contract, ethers } from "ethers";
 import { useState } from "react";
 import useSWR from "swr";
+
+type UserApprovalInfo = {
+    contractAddress: string;
+    contractABI: any;
+    contract: Contract | undefined;
+    logsEmitted: any[];
+}
 
 export default function useApprovals(chainId: any, txHashList: any[] | undefined) {
     const receiptsFetcher = (...args: [any]) => {
@@ -35,22 +44,23 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
                 body: JSON.stringify(contractAddresses)
             })
                 .then((res) => res.json())
-                .then((abis) => console.log(abis));
+                .then((abis) => createContractInstances(abis));
         }
 
         return undefined;
     };
 
-    const [addressToLogsMap, setAddressToLogsMap] = useState<Map<string, any[]>>(new Map());
-    const { data: abis, error: abisError, isLoading: isLoadingABIs } = useSWR({ url: `api/getContractABI?chainId=${chainId}`, contractAddresses: Array.from(addressToLogsMap.keys()) }, abisFetcher, {
+    //const [addressToLogsMap, setAddressToLogsMap] = useState<Map<string, any[]>>(new Map());
+    const [userApprovalInfo, setUserApprovalInfo] = useState<UserApprovalInfo[]>([]);
+
+    const { data: abis, error: abisError, isLoading: isLoadingABIs } = useSWR({ url: `api/getContractABI?chainId=${chainId}`, contractAddresses: userApprovalInfo.map(uai => uai.contractAddress) }, abisFetcher, {
         revalidateIfStale: false,
         revalidateOnFocus: false,
         revalidateOnReconnect: false
     });
 
     const fetchContractsABIFromReceipts = async (receipts: any[]) => {
-        //Map to hold the contract address and the total of logs it emitted
-        let _addressToLogsMap = new Map<string, any[]>();
+        let _userApprovalInfo: UserApprovalInfo[] = [];
 
         if (receipts) {
             let filteredReceipts = receipts.filter((response: any) => response.result.logs.length > 0).map((filteredResponses: any) => filteredResponses.result);
@@ -58,17 +68,35 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
                 receipt.logs.forEach((log: any) => {
                     //Get all events that correspond to approvals
                     if (ALL_APPROVAL_TOPICS.includes(log.topics[0])) {
-                        if (_addressToLogsMap.get(log.address)) {
-                            _addressToLogsMap.get(log.address)!.push(log.topics);
+                        const existingObject = _userApprovalInfo.find(uai => uai.contractAddress === log.address);
+                        if (existingObject) {
+                            existingObject.logsEmitted.push(log.topics);
                         } else {
-                            _addressToLogsMap.set(log.address, [log.topics]);
+                            _userApprovalInfo.push({ contractAddress: log.address, contractABI: undefined, contract: undefined, logsEmitted: [log.topics] })
                         }
                     }
                 })
             });
         }
 
-        setAddressToLogsMap(_addressToLogsMap);
+        setUserApprovalInfo(_userApprovalInfo);
+    };
+
+    const createContractInstances = async (abis: any[]) => {
+        let provider = new ethers.providers.AlchemyProvider(ethers.providers.getNetwork(chainId), getNetworkKey(chainId));
+        let _userApprovalInfo = userApprovalInfo;
+
+        if (abis) {
+            abis.forEach((abi: any) => {
+                let existingObject = _userApprovalInfo.find((uai) => uai.contractAddress === abi.address);
+                if (existingObject) {
+                    existingObject.contractABI = abi.data.result;
+                    existingObject.contract = new Contract(existingObject.contractAddress, existingObject.contractABI, provider);
+                }
+            });
+        }
+
+        setUserApprovalInfo(_userApprovalInfo);
     };
 
     return { erc20Approvals: receipts, isLoadingReceipts, isError: receiptsError };
