@@ -1,4 +1,4 @@
-import { ALL_APPROVAL_TOPICS, FALLBACK_INTERFACE } from "@/utils/constants";
+import { ALL_APPROVAL_TOPICS, ERC1155_INTERFACE_ID, ERC20_INTERFACE_ID, ERC721_INTERFACE_ID, FALLBACK_INTERFACE } from "@/utils/constants";
 import { getNetworkKey } from "@/utils/shared";
 import { Contract, ethers } from "ethers";
 import { useState } from "react";
@@ -7,6 +7,7 @@ import useSWR from "swr";
 type UserApprovalInfo = {
     contractAddress: string;
     contractABI: any;
+    contractType: number; //0 undefined, 1 ERC20, 2 ERC721, 3 ERC1155
     contract: Contract | undefined;
     logsEmitted: any[];
     decodedEvents: any[];
@@ -80,7 +81,7 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
                             existingObject.logsEmitted.push({ data: log.data, topics: log.topics });
                         } else {
                             abisToFetch.push(log.address);
-                            _userApprovalInfo.push({ contractAddress: log.address, contractABI: undefined, contract: undefined, logsEmitted: [{ data: log.data, topics: log.topics }], decodedEvents: [] })
+                            _userApprovalInfo.push({ contractAddress: log.address, contractABI: undefined, contractType: 0, contract: undefined, logsEmitted: [{ data: log.data, topics: log.topics }], decodedEvents: [] })
                         }
                     }
                 })
@@ -97,12 +98,14 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         let _userApprovalInfo = userApprovalInfo;
 
         if (abis) {
-            abis.forEach((abi: any) => {
+            abis.forEach(async (abi: any) => {
                 let existingObject = _userApprovalInfo?.find(uai => uai.contractAddress === abi.address);
 
                 if (existingObject) {
                     existingObject.contractABI = abi.data.result;
                     existingObject.contract = new Contract(existingObject.contractAddress, existingObject.contractABI, provider);
+                    let type = await determineContractType(existingObject.contract);
+                    console.log("TYPE: ", type)
                     existingObject.logsEmitted.forEach((log: any) => {
                         /**
                         * Some contracts throwed an error when decoding the event because, somehow, their abi doesn't have the event emitted.
@@ -120,8 +123,40 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
             });
         }
 
+        console.log("FINALIZED: ", _userApprovalInfo)
         setUserApprovalInfo(_userApprovalInfo);
     };
+
+    const determineContractType = async (contract: Contract) => {
+        console.log("CHECKING CONTRACT: ", contract.address)
+        try {
+            const isERC20 = await contract.functions.supportsInterface(ERC20_INTERFACE_ID);
+            console.log("IS ERC 20?", isERC20);
+            if (isERC20) {
+                return 1;
+            }
+
+            console.log("HERE 1")
+            const isERC721 = await contract.functions.supportsInterface(ERC721_INTERFACE_ID);
+            console.log("IS ERC 721?", isERC721)
+            if (isERC721) {
+                return 2;
+            }
+
+            console.log("HERE 2")
+
+            const isERC1155 = await contract.functions.supportsInterface(ERC1155_INTERFACE_ID);
+            console.log("IS ERC 1155?", isERC1155);
+            if (isERC1155) {
+                return 3;
+            }
+
+            return 0;
+        } catch (_) {
+            console.log("HERE 3")
+            return 0;
+        }
+    }
 
     return { erc20Approvals: receipts, isLoadingReceipts, isError: receiptsError };
 };
