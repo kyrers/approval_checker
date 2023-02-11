@@ -104,8 +104,7 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
                 if (existingObject) {
                     existingObject.contractABI = abi.data.result;
                     existingObject.contract = new Contract(existingObject.contractAddress, existingObject.contractABI, provider);
-                    let type = await determineContractType(existingObject.contract);
-                    console.log("TYPE: ", type)
+                    existingObject.contractType = await determineContractType(existingObject.contract);
                     existingObject.logsEmitted.forEach((log: any) => {
                         /**
                         * Some contracts throwed an error when decoding the event because, somehow, their abi doesn't have the event emitted.
@@ -127,33 +126,17 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         setUserApprovalInfo(_userApprovalInfo);
     };
 
+    /**
+     * Ideally, this would be done using ERC165 supportsInterface. Unfortunately, most contracts don't support it.
+     * This is a workaround. 
+     */
     const determineContractType = async (contract: Contract) => {
-        console.log("CHECKING CONTRACT: ", contract.address)
         try {
-            const isERC20 = await contract.functions.supportsInterface(ERC20_INTERFACE_ID);
-            console.log("IS ERC 20?", isERC20);
-            if (isERC20) {
-                return 1;
-            }
-
-            console.log("HERE 1")
-            const isERC721 = await contract.functions.supportsInterface(ERC721_INTERFACE_ID);
-            console.log("IS ERC 721?", isERC721)
-            if (isERC721) {
-                return 2;
-            }
-
-            console.log("HERE 2")
-
-            const isERC1155 = await contract.functions.supportsInterface(ERC1155_INTERFACE_ID);
-            console.log("IS ERC 1155?", isERC1155);
-            if (isERC1155) {
-                return 3;
-            }
-
-            return 0;
-        } catch (_) {
-            console.log("HERE 3")
+            let contractFragments = contract.interface.fragments.map(f => f.name);
+            console.log("CONTRACT ", contract.address, contractFragments)
+            return contractFragments.includes("safeBatchTransferFrom") ? 3 : contractFragments.includes("setApprovalForAll") ? 2 : contractFragments.includes("approve") ? 1 : 0;
+        } catch (err) {
+            console.log("HERE ", err)
             return 0;
         }
     }
