@@ -1,4 +1,4 @@
-import { ALL_APPROVAL_TOPICS, ERC1155_INTERFACE_ID, ERC20_INTERFACE_ID, ERC721_INTERFACE_ID, FALLBACK_INTERFACE } from "@/utils/constants";
+import { ALL_APPROVAL_TOPICS, FALLBACK_INTERFACE } from "@/utils/constants";
 import { getNetworkKey } from "@/utils/shared";
 import { Contract, ethers } from "ethers";
 import { useState } from "react";
@@ -7,13 +7,18 @@ import useSWR from "swr";
 type UserApprovalInfo = {
     contractAddress: string;
     contractABI: any;
-    contractType: number; //0 undefined, 1 ERC20, 2 ERC721, 3 ERC1155
+    contractType: number; //-1 proxy, 0 undefined, 1 ERC20, 2 ERC721, 3 ERC1155
     contract: Contract | undefined;
     logsEmitted: any[];
     decodedEvents: any[];
 }
 
 export default function useApprovals(chainId: any, txHashList: any[] | undefined) {
+    const [contractAddressesToFetch, setContractAddressesToFetch] = useState<any[]>([]);
+    // This bool is needed to control when to fetch ABIs, otherwise when any other state variable updated it would try to fetch again, since the abi fetcher useSWR uses state vars as a parameter
+    const [isToFetchABIs, setIsToFetchABIs] = useState(false);
+    const [userApprovalInfo, setUserApprovalInfo] = useState<UserApprovalInfo[]>([]);
+
     const receiptsFetcher = (...args: [any]) => {
         const hashList = args[0].hashList;
         if (hashList && hashList.length > 0) {
@@ -55,23 +60,21 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         return undefined;
     };
 
-    const [contractAddressesToFetch, setContractAddressesToFetch] = useState<any[]>([]);
-    // This bool is needed to control when to fetch ABIs, otherwise when any other state variable updated it would try to fetch again, since the abi fetcher useSWR uses state vars as a parameter
-    const [isToFetchABIs, setIsToFetchABIs] = useState(false);
-    const [userApprovalInfo, setUserApprovalInfo] = useState<UserApprovalInfo[] | undefined>([]);
-
     const { data: abis, error: abisError, isLoading: isLoadingABIs } = useSWR({ url: `api/getContractABI?chainId=${chainId}`, contractAddresses: contractAddressesToFetch, isToFetch: isToFetchABIs }, abisFetcher, {
         revalidateIfStale: false,
         revalidateOnFocus: false,
         revalidateOnReconnect: false
     });
 
+
+
     const fetchContractsABIFromReceipts = (receipts: any[]) => {
-        let _userApprovalInfo: UserApprovalInfo[] = [];
+        let _userApprovalInfo = userApprovalInfo;
         let abisToFetch: any[] = [];
 
         if (receipts) {
             let filteredReceipts = receipts.filter((response: any) => response.result.logs.length > 0).map((filteredResponses: any) => filteredResponses.result);
+
             filteredReceipts.forEach((receipt: any) => {
                 receipt.logs.forEach((log: any) => {
                     //Get all events that correspond to approvals
@@ -93,18 +96,23 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         setIsToFetchABIs(true);
     };
 
-    const createContractInstancesAndDecodeEvents = (abis: any[]) => {
+    const createContractInstancesAndDecodeEvents = async (abis: any[]) => {
         let provider = new ethers.providers.AlchemyProvider(ethers.providers.getNetwork(chainId), getNetworkKey(chainId));
         let _userApprovalInfo = userApprovalInfo;
+        let proxiedContracts: any[] = [];
 
         if (abis) {
-            abis.forEach(async (abi: any) => {
-                let existingObject = _userApprovalInfo?.find(uai => uai.contractAddress === abi.address);
+            for (let abi of abis) {
+                let existingObject = _userApprovalInfo.find(uai => uai.contractAddress === abi.address);
 
                 if (existingObject) {
                     existingObject.contractABI = abi.data.result;
                     existingObject.contract = new Contract(existingObject.contractAddress, existingObject.contractABI, provider);
-                    existingObject.contractType = await determineContractType(existingObject.contract);
+                    existingObject.contractType = await determineContractType(existingObject);
+                    console.log("TYPE: ", existingObject.contractType)
+                    if (existingObject.contractType === -1) {
+                        proxiedContracts.push(existingObject.contractAddress)
+                    }
                     existingObject.logsEmitted.forEach((log: any) => {
                         /**
                         * Some contracts throwed an error when decoding the event because, somehow, their abi doesn't have the event emitted.
@@ -119,24 +127,36 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
                         }
                     });
                 }
-            });
+            };
         }
 
-        console.log("FINALIZED: ", _userApprovalInfo)
-        setUserApprovalInfo(_userApprovalInfo);
+        if (proxiedContracts.length > 0) {
+            //Fetch proxied contracts ABIs
+            setContractAddressesToFetch(proxiedContracts);
+            setIsToFetchABIs(true);
+        } else {
+            console.log("FINALIZED: ", _userApprovalInfo)
+            setUserApprovalInfo(_userApprovalInfo);
+        }
     };
 
     /**
      * Ideally, this would be done using ERC165 supportsInterface. Unfortunately, most contracts don't support it.
      * This is a workaround. 
      */
-    const determineContractType = async (contract: Contract) => {
+    const determineContractType = async (uai: UserApprovalInfo) => {
         try {
-            let contractFragments = contract.interface.fragments.map(f => f.name);
-            console.log("CONTRACT ", contract.address, contractFragments)
-            return contractFragments.includes("safeBatchTransferFrom") ? 3 : contractFragments.includes("setApprovalForAll") ? 2 : contractFragments.includes("approve") ? 1 : 0;
+            let contractFragments = uai.contract?.interface.fragments.map(f => f.name) ?? [];
+            //console.log("CONTRACT ", uai.contractAddress, contractFragments)
+            let type = contractFragments.includes("safeBatchTransferFrom") ? 3 : contractFragments.includes("setApprovalForAll") ? 2 : contractFragments.includes("approve") ? 1 : contractFragments.includes("implementation") ? -1 : 0;
+
+            if (-1 === type) {
+                //Update the UserApprovalInfo object to the address of the implementation so we can refetch the ABI and get the implementation contract
+                uai.contractAddress = await uai.contract?.implementation();
+            }
+
+            return type;
         } catch (err) {
-            console.log("HERE ", err)
             return 0;
         }
     }
