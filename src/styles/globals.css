@@ -15,7 +15,7 @@
   --font-family: Roboto Regular, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue;
 
   --default-background-color: #2b2d32;
-  --header-text-color: #4da7aa;
+  --text-color: #4da7aa;
 
   --panel-background: linear-gradient(317.38deg, var(--default-background-color), #000);
   --panel-border-rgb: rgb(108, 108, 108);

@@ -1,8 +1,15 @@
+import { supportedChain } from "@/utils/shared";
 import { BigNumber } from "ethers";
 import useSWR from "swr";
 
 export default function useLatestBlock(chainId: any) {
-    const fetcher = (...args: [any]) => fetch(...args).then((res) => res.json());
+    const fetcher = (...args: [any]) => {
+        if (supportedChain(chainId)) {
+            return fetch(...args).then((res) => res.json());
+        }
+
+        return undefined;
+    };
     const { data, error, isLoading } = useSWR(`api/getLatestBlock?chainId=${chainId}`, fetcher, {
         revalidateIfStale: false,
         revalidateOnFocus: false,

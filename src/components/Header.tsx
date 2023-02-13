@@ -1,6 +1,7 @@
 import styles from "../styles/Header.module.css"
 import { Dispatch, SetStateAction } from "react";
 import { useAccount } from "wagmi";
+import { appTitle, supportedChainsText } from "@/utils/strings";
 
 type FunctionProps = {
     setShowWalletSelector: Dispatch<SetStateAction<boolean>>;
@@ -16,7 +17,8 @@ export default function Header({ setShowWalletSelector }: FunctionProps) {
     return (
         <header className={styles.header}>
             <div className={styles.headerInfo}>
-                <h1 className={styles.headerText}>What have I approved?</h1>
+                <h1 className={styles.headerText}>{appTitle}</h1>
+                <p>{supportedChainsText}</p>
             </div>
             <div className={styles.headerWallet}>
                 <button onClick={() => setShowWalletSelector(true)}>

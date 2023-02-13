@@ -1,3 +1,9 @@
+import { SUPPORTED_CHAINS } from "./constants";
+
+export const supportedChain = (chainId: any) => {
+    return SUPPORTED_CHAINS.includes(chainId);
+}
+
 export const getNetworkKey = (chainId: any) => {
     switch (chainId) {
         case "10":

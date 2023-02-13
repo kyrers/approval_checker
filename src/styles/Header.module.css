@@ -25,7 +25,8 @@
 
 .headerInfo {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
+    color: var(--text-color);
 }
 
 .headerWallet {
@@ -34,10 +35,8 @@
 }
 
 .headerText {
-    color: var(--header-text-color);
     text-align: center;
     font-family: Roboto Bold;
-
 }
 
 @media (max-width: 793px) {

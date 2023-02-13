@@ -1,5 +1,5 @@
 import { ALL_APPROVAL_TOPICS, FALLBACK_INTERFACE } from "@/utils/constants";
-import { getNetworkKey } from "@/utils/shared";
+import { getNetworkKey, supportedChain } from "@/utils/shared";
 import { Contract, ethers } from "ethers";
 import { useState } from "react";
 import useSWR from "swr";
@@ -14,6 +14,7 @@ type UserApprovalInfo = {
 }
 
 export default function useApprovals(chainId: any, txHashList: any[] | undefined) {
+    const [isDecoding, setIsDecoding] = useState(true);
     const [contractAddressesToFetch, setContractAddressesToFetch] = useState<any[]>([]);
     // This bool is needed to control when to fetch ABIs, otherwise when any other state variable updated it would try to fetch again, since the abi fetcher useSWR uses state vars as a parameter
     const [isToFetchABIs, setIsToFetchABIs] = useState(false);
@@ -21,7 +22,8 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
 
     const receiptsFetcher = (...args: [any]) => {
         const hashList = args[0].hashList;
-        if (hashList && hashList.length > 0) {
+        if (hashList && hashList.length > 0 && supportedChain(chainId)) {
+            setIsDecoding(true);
             //POST request to send hashList. Otherwise it would be sent via url which is insane
             return fetch(args[0].url, {
                 method: "POST",
@@ -35,7 +37,7 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         return undefined;
     };
 
-    const { data: receipts, error: receiptsError, isLoading: isLoadingReceipts } = useSWR({ url: `api/getTransactionReceiptByHash?chainId=${chainId}`, hashList: txHashList }, receiptsFetcher, {
+    const { error: receiptsError } = useSWR({ url: `api/getTransactionReceiptByHash?chainId=${chainId}`, hashList: txHashList }, receiptsFetcher, {
         revalidateIfStale: false,
         revalidateOnFocus: false,
         revalidateOnReconnect: false
@@ -44,7 +46,7 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
     const abisFetcher = (...args: [any]) => {
         const isToFetch = args[0].isToFetch;
         const contractAddresses = args[0].contractAddresses;
-        if (isToFetch && contractAddresses && contractAddresses.length > 0) {
+        if (isToFetch && contractAddresses && contractAddresses.length > 0 && supportedChain(chainId)) {
             setIsToFetchABIs(false);
 
             //POST request to send contractAddresses LIST. Otherwise it would be sent via url which is insane
@@ -60,13 +62,11 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         return undefined;
     };
 
-    const { data: abis, error: abisError, isLoading: isLoadingABIs } = useSWR({ url: `api/getContractABI?chainId=${chainId}`, contractAddresses: contractAddressesToFetch, isToFetch: isToFetchABIs }, abisFetcher, {
+    const { error: abisError } = useSWR({ url: `api/getContractABI?chainId=${chainId}`, contractAddresses: contractAddressesToFetch, isToFetch: isToFetchABIs }, abisFetcher, {
         revalidateIfStale: false,
         revalidateOnFocus: false,
         revalidateOnReconnect: false
     });
-
-
 
     const fetchContractsABIFromReceipts = (receipts: any[]) => {
         let _userApprovalInfo = userApprovalInfo;
@@ -109,7 +109,6 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
                     existingObject.contractABI = abi.data.result;
                     existingObject.contract = new Contract(existingObject.contractAddress, existingObject.contractABI, provider);
                     existingObject.contractType = await determineContractType(existingObject);
-                    console.log("TYPE: ", existingObject.contractType)
                     if (existingObject.contractType === -1) {
                         proxiedContracts.push(existingObject.contractAddress)
                     }
@@ -135,8 +134,9 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
             setContractAddressesToFetch(proxiedContracts);
             setIsToFetchABIs(true);
         } else {
-            console.log("FINALIZED: ", _userApprovalInfo)
             setUserApprovalInfo(_userApprovalInfo);
+            console.log("STOPPED DECODING:", _userApprovalInfo)
+            setIsDecoding(false);
         }
     };
 
@@ -161,5 +161,5 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         }
     }
 
-    return { erc20Approvals: receipts, isLoadingReceipts, isError: receiptsError };
+    return { approvals: userApprovalInfo, isDecoding, isError: receiptsError || abisError};
 };

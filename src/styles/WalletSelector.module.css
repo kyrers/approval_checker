@@ -42,7 +42,7 @@
 }
 
 .walletSelectorText {
-    color: var(--header-text-color);
+    color: var(--text-color);
     text-align: center;
 }
 
