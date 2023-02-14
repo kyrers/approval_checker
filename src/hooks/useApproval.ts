@@ -69,7 +69,7 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
     });
 
     const fetchContractsABIFromReceipts = (receipts: any[]) => {
-        let _userApprovalInfo = userApprovalInfo;
+        let _userApprovalInfo: UserApprovalInfo[] = [];
         let abisToFetch: any[] = [];
 
         if (receipts) {
@@ -135,7 +135,6 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
             setIsToFetchABIs(true);
         } else {
             setUserApprovalInfo(_userApprovalInfo);
-            console.log("STOPPED DECODING:", _userApprovalInfo)
             setIsDecoding(false);
         }
     };
@@ -161,5 +160,5 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         }
     }
 
-    return { approvals: userApprovalInfo, isDecoding, isError: receiptsError || abisError};
+    return { approvals: userApprovalInfo, isDecoding, isError: receiptsError || abisError };
 };
