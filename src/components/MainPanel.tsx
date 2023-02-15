@@ -7,13 +7,14 @@ import useLatestBlock from "@/hooks/useLatestBlock";
 import useNormalTransactionHashList from "@/hooks/useNormalTransactionHashList";
 import useApprovals from "@/hooks/useApproval";
 import LoadingScreen from "./LoadingScreen";
+import EventsTable from "./EventsTable";
 
 export default function MainPanel() {
     const { address, isConnected } = useAccount();
     const { chain } = useNetwork();
     const { latestBlock, isLoading: isLoadingLatestBlock, isError: isErrorLoadingLatestBlock } = useLatestBlock(chain?.id);
     const { normalTxHashList, isLoading: isLoadingTransactions, isError: isErrorLoadingTransactions } = useNormalTransactionHashList(latestBlock, chain?.id, address);
-    const { approvals, isDecoding, isError: isErrorLoadingApprovals } = useApprovals(chain?.id, normalTxHashList);
+    const { erc20Approvals, erc721Approvals, erc1155Approvals, isDecoding, isError: isErrorLoadingApprovals } = useApprovals(chain?.id, normalTxHashList);
 
     return (
         <div className={styles.mainPanel}>
@@ -29,7 +30,7 @@ export default function MainPanel() {
                             :
                             <Tabs defaultActiveKey="ERC20" id="approval-category-tab">
                                 <Tab eventKey="ERC20" title="ERC20">
-                                    ERC20 Table
+                                    <EventsTable approvals={erc20Approvals.flatMap(uai => { return { asset: uai.contractName, events: uai.decodedEvents } })} type={1} />
                                 </Tab>
                                 <Tab eventKey="ERC721" title="ERC721">
                                     ERC721 Table

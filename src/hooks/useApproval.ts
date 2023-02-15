@@ -5,6 +5,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 type UserApprovalInfo = {
+    contractName: string;
     contractAddress: string;
     contractABI: any;
     contractType: number; //-1 proxy, 0 undefined, 1 ERC20, 2 ERC721, 3 ERC1155
@@ -84,7 +85,7 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
                             existingObject.logsEmitted.push({ data: log.data, topics: log.topics });
                         } else {
                             abisToFetch.push(log.address);
-                            _userApprovalInfo.push({ contractAddress: log.address, contractABI: undefined, contractType: 0, contract: undefined, logsEmitted: [{ data: log.data, topics: log.topics }], decodedEvents: [] })
+                            _userApprovalInfo.push({ contractName: log.address, contractAddress: log.address, contractABI: undefined, contractType: 0, contract: undefined, logsEmitted: [{ data: log.data, topics: log.topics }], decodedEvents: [] })
                         }
                     }
                 })
@@ -111,11 +112,14 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
                     existingObject.contractType = await determineContractType(existingObject);
                     if (existingObject.contractType === -1) {
                         proxiedContracts.push(existingObject.contractAddress)
+                    } else {
+                        existingObject.contractName = await existingObject.contract.name();
                     }
                     existingObject.logsEmitted.forEach((log: any) => {
                         /**
-                        * Some contracts throwed an error when decoding the event because, somehow, their abi doesn't have the event emitted.
-                        * To handle those situations, we have a FALLBACK_INTERFACE that has all the events we want to decode
+                        * Proxy contracts throw an error when decoding the event because, their abi doesn't have the event emitted.
+                        * To handle those situations, we have a FALLBACK_INTERFACE that has all the events we want to decode.
+                        * This way we can decode them before getting the proxied contract.
                         */
                         try {
                             let decodedEvent = existingObject?.contract?.interface.parseLog({ topics: log.topics, data: log.data });
@@ -136,6 +140,7 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         } else {
             setUserApprovalInfo(_userApprovalInfo);
             setIsDecoding(false);
+            console.log(_userApprovalInfo)
         }
     };
 
@@ -160,5 +165,11 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         }
     }
 
-    return { approvals: userApprovalInfo, isDecoding, isError: receiptsError || abisError };
+    return {
+        erc20Approvals: userApprovalInfo.filter(uai => uai.contractType === 1),
+        erc721Approvals: userApprovalInfo.filter(uai => uai.contractType === 2),
+        erc1155Approvals: userApprovalInfo.filter(uai => uai.contractType === 3),
+        isDecoding,
+        isError: receiptsError || abisError
+    };
 };
