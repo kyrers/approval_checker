@@ -30,7 +30,7 @@ export default function MainPanel() {
                             :
                             <Tabs defaultActiveKey="ERC20" id="approval-category-tab">
                                 <Tab eventKey="ERC20" title="ERC20">
-                                    <EventsTable approvals={erc20Approvals.flatMap(uai => { return { asset: uai.contractName, events: uai.decodedEvents } })} type={1} />
+                                    <EventsTable events={erc20Approvals.flatMap(approval => approval.decodedEvents)} type={1} />
                                 </Tab>
                                 <Tab eventKey="ERC721" title="ERC721">
                                     ERC721 Table

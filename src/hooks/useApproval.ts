@@ -1,4 +1,4 @@
-import { ALL_APPROVAL_TOPICS, FALLBACK_INTERFACE } from "@/utils/constants";
+import { ALL_APPROVAL_TOPICS } from "@/utils/constants";
 import { getNetworkKey, supportedChain } from "@/utils/shared";
 import { Contract, ethers } from "ethers";
 import { useState } from "react";
@@ -115,20 +115,14 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
                     } else {
                         existingObject.contractName = await existingObject.contract.name();
                     }
-                    existingObject.logsEmitted.forEach((log: any) => {
-                        /**
-                        * Proxy contracts throw an error when decoding the event because, their abi doesn't have the event emitted.
-                        * To handle those situations, we have a FALLBACK_INTERFACE that has all the events we want to decode.
-                        * This way we can decode them before getting the proxied contract.
-                        */
-                        try {
-                            let decodedEvent = existingObject?.contract?.interface.parseLog({ topics: log.topics, data: log.data });
-                            existingObject?.decodedEvents.push(decodedEvent)
-                        } catch (_) {
-                            let decodedEvent = FALLBACK_INTERFACE.parseLog({ topics: log.topics, data: log.data });
-                            existingObject?.decodedEvents.push(decodedEvent);
-                        }
-                    });
+                    /**
+                    * Proxy contracts throw an error when decoding the event because, their abi doesn't have the event emitted.
+                    * To handle those situations, we only decode events for contracts that are not proxy contracts. 
+                    * This works because later we will get the proxied contracts.
+                    */
+                    if (existingObject.contractType !== -1) {
+                        await decodeEvents(existingObject);
+                    }
                 }
             };
         }
@@ -163,6 +157,19 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         } catch (err) {
             return 0;
         }
+    }
+
+    const decodeEvents = async (uai: UserApprovalInfo) => {
+        for (let log of uai.logsEmitted) {
+            let decodedEvent = uai.contract?.interface.parseLog({ topics: log.topics, data: log.data });
+            let decimals = uai.contractType === 1 ? await uai.contract?.decimals() : undefined;
+            let eventObject = {
+                asset: uai.contractName,
+                spender: decodedEvent?.args[1],
+                amount: decimals ? ethers.constants.MaxUint256.eq(decodedEvent?.args[2]) ? "Unlimited" : ethers.utils.formatUnits(decodedEvent?.args[2], decimals) : ""
+            }
+            uai.decodedEvents.push(eventObject);
+        };
     }
 
     return {
