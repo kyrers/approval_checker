@@ -1,3 +1,5 @@
+import styles from "../styles/EventsTable.module.css";
+
 export default function EventsTable({ events, type }: { events: any[], type: number }) {
     console.log(events)
 
@@ -24,7 +26,7 @@ export default function EventsTable({ events, type }: { events: any[], type: num
     };
 
     return (
-        <table className="table table-striped table-dark">
+        <table className={`${styles.eventsTable} table table-striped table-dark`}>
             <thead>
                 {renderHeaders()}
             </thead>

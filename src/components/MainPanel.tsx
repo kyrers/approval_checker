@@ -33,10 +33,10 @@ export default function MainPanel() {
                                     <EventsTable events={erc20Approvals.flatMap(approval => approval.decodedEvents)} type={1} />
                                 </Tab>
                                 <Tab eventKey="ERC721" title="ERC721">
-                                    ERC721 Table
+                                    <EventsTable events={erc721Approvals.flatMap(approval => approval.decodedEvents)} type={2} />
                                 </Tab>
                                 <Tab eventKey="ERC1155" title="ERC1155">
-                                    ERC1155 Table
+                                    <EventsTable events={erc1155Approvals.flatMap(approval => approval.decodedEvents)} type={3} />
                                 </Tab>
                             </Tabs>
             }

@@ -166,7 +166,7 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
             let eventObject = {
                 asset: uai.contractName,
                 spender: decodedEvent?.args[1],
-                amount: decimals ? ethers.constants.MaxUint256.eq(decodedEvent?.args[2]) ? "Unlimited" : ethers.utils.formatUnits(decodedEvent?.args[2], decimals) : ""
+                amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? "Unlimited" :Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : ""
             }
             uai.decodedEvents.push(eventObject);
         };
