@@ -1,5 +1,5 @@
 import { ALL_APPROVAL_TOPICS } from "@/utils/constants";
-import { getNetworkKey, supportedChain } from "@/utils/shared";
+import { formatHash, getNetworkKey, getTransactionUrl, supportedChain } from "@/utils/shared";
 import { Contract, ethers } from "ethers";
 import { useState } from "react";
 import useSWR from "swr";
@@ -75,17 +75,17 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
 
         if (receipts) {
             let filteredReceipts = receipts.filter((response: any) => response.result.logs.length > 0).map((filteredResponses: any) => filteredResponses.result);
-
             filteredReceipts.forEach((receipt: any) => {
+                
                 receipt.logs.forEach((log: any) => {
                     //Get all events that correspond to approvals
                     if (ALL_APPROVAL_TOPICS.includes(log.topics[0])) {
                         const existingObject = _userApprovalInfo.find(uai => uai.contractAddress === log.address);
                         if (existingObject) {
-                            existingObject.logsEmitted.push({ data: log.data, topics: log.topics });
+                            existingObject.logsEmitted.push({ txHash: receipt.transactionHash, data: log.data, topics: log.topics });
                         } else {
                             abisToFetch.push(log.address);
-                            _userApprovalInfo.push({ contractName: log.address, contractAddress: log.address, contractABI: undefined, contractType: 0, contract: undefined, logsEmitted: [{ data: log.data, topics: log.topics }], decodedEvents: [] })
+                            _userApprovalInfo.push({ contractName: log.address, contractAddress: log.address, contractABI: undefined, contractType: 0, contract: undefined, logsEmitted: [{ txHash: receipt.transactionHash, data: log.data, topics: log.topics, blockNumber: log.blockNumber }], decodedEvents: [] })
                         }
                     }
                 })
@@ -164,6 +164,8 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
             let decodedEvent = uai.contract?.interface.parseLog({ topics: log.topics, data: log.data });
             let decimals = uai.contractType === 1 ? await uai.contract?.decimals() : undefined;
             let eventObject = {
+                txHash: formatHash(log.txHash),
+                txUrl: `${getTransactionUrl(chainId)}/${log.txHash}`,
                 asset: uai.contractName,
                 spender: decodedEvent?.args[1],
                 amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? "Unlimited" :Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : ""

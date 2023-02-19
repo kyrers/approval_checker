@@ -2,8 +2,13 @@ import { SUPPORTED_CHAINS } from "./constants";
 
 export const supportedChain = (chainId: any) => {
     return SUPPORTED_CHAINS.includes(chainId);
-}
+};
 
+export const formatHash = (hash: string) => {
+    return hash.substring(0, 6) + "..." + hash.slice(-4);
+};
+
+//URLS
 export const getNetworkKey = (chainId: any) => {
     switch (chainId) {
         case "10":
@@ -55,5 +60,14 @@ export const getContractABIApiUrl = (chainId: any) => {
             return `${process.env.NEXT_PUBLIC_OPTISCAN_GET_CONTRACT_ABI}`;
         default:
             return `${process.env.NEXT_PUBLIC_ETHERSCAN_GET_CONTRACT_ABI}`;
+    };
+};
+
+export const getTransactionUrl = (chainId: any) => {
+    switch (chainId) {
+        case "10":
+            return `${process.env.NEXT_PUBLIC_OPTISCAN_TRANSACTION_URL}`;
+        default:
+            return `${process.env.NEXT_PUBLIC_ETHERSCAN_TRANSACTION_URL}`;
     };
 };
