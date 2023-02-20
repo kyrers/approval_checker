@@ -4,7 +4,7 @@ export const supportedChain = (chainId: any) => {
     return SUPPORTED_CHAINS.includes(chainId);
 };
 
-export const formatHash = (hash: string) => {
+export const formatBytes = (hash: string) => {
     return hash.substring(0, 6) + "..." + hash.slice(-4);
 };
 
@@ -69,5 +69,14 @@ export const getTransactionUrl = (chainId: any) => {
             return `${process.env.NEXT_PUBLIC_OPTISCAN_TRANSACTION_URL}`;
         default:
             return `${process.env.NEXT_PUBLIC_ETHERSCAN_TRANSACTION_URL}`;
+    };
+};
+
+export const getAddressUrl = (chainId: any) => {
+    switch (chainId) {
+        case "10":
+            return `${process.env.NEXT_PUBLIC_OPTISCAN_SPENDER_URL}`;
+        default:
+            return `${process.env.NEXT_PUBLIC_ETHERSCAN_SPENDER_URL}`;
     };
 };

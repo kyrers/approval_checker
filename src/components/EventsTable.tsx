@@ -19,8 +19,8 @@ export default function EventsTable({ events, type }: { events: any[], type: num
             events.map((event: any, index: number) =>
                 <tr key={`approval_row_${type}_${index}`}>
                     <td><a href={event.txUrl} target="_blank">{event.txHash}</a></td>
-                    <td>{event.asset}</td>
-                    <td>{event.spender}</td>
+                    <td><a href={event.assetUrl} target="_blank">{event.asset}</a></td>
+                    <td><a href={event.spenderUrl} target="_blank">{event.spender}</a></td>
                     {type === 1 ? <td>{event.amount}</td> : null}
                 </tr>
             )

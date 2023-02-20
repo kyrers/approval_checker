@@ -1,5 +1,5 @@
 import { ALL_APPROVAL_TOPICS } from "@/utils/constants";
-import { formatHash, getNetworkKey, getTransactionUrl, supportedChain } from "@/utils/shared";
+import { formatBytes, getAddressUrl, getNetworkKey, getTransactionUrl, supportedChain } from "@/utils/shared";
 import { Contract, ethers } from "ethers";
 import { useState } from "react";
 import useSWR from "swr";
@@ -164,10 +164,12 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
             let decodedEvent = uai.contract?.interface.parseLog({ topics: log.topics, data: log.data });
             let decimals = uai.contractType === 1 ? await uai.contract?.decimals() : undefined;
             let eventObject = {
-                txHash: formatHash(log.txHash),
+                txHash: formatBytes(log.txHash),
                 txUrl: `${getTransactionUrl(chainId)}/${log.txHash}`,
                 asset: uai.contractName,
-                spender: decodedEvent?.args[1],
+                assetUrl: `${getAddressUrl(chainId)}/${uai.contractAddress}`,
+                spender: formatBytes(decodedEvent?.args[1]),
+                spenderUrl: `${getAddressUrl(chainId)}/${decodedEvent?.args[1]}`,
                 amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? "Unlimited" :Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : ""
             }
             uai.decodedEvents.push(eventObject);
