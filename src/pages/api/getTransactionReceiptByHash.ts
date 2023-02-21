@@ -7,16 +7,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const correctAPIKey = getChainAPIKey(req.query.chainId);
         const partialURL = getTransactionReceiptByHashApiUrl(req.query.chainId);
 
-        const response: any[] = [];
         const hashList = req.body;
         const length = hashList?.length ?? 0;
+
+        /**
+         * Create an array for the receipts with the same length as the number of tx hashes.
+         * This is needed so later we can have the receipts in the same order as the Etherscan API returned the transactions in getNormalTransactions.
+         * Note that this actually populates the array with the hashes, but we need to do so because we can't simple keep a record of the index 
+         * of the hash being fetched and then replace the response array in the same position. We can't do this because we use the fetch5 function array and
+         * slice the hashList in batches of 5, so indexes would always be 1...5
+         */
+        const response: any[] = [...hashList];
 
         const fetch5 = (batch: any[]) => {
             return Promise.all(
                 batch.map(async (txHash) => {
                     const fullURL = `${partialURL}&txhash=${txHash}&apikey=${correctAPIKey}`;
                     const data = await fetch(fullURL).then((response) => response.json());
-                    response.push(data);
+                    const index = response.findIndex(txHash => txHash === data.result.transactionHash);
+                    //Use splice to simulate an insertAt operation,removing the txHash and adding the receipt
+                    response.splice(index, 1, data);
                 })
             );
         }

@@ -76,7 +76,6 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         if (receipts) {
             let filteredReceipts = receipts.filter((response: any) => response.result.logs.length > 0).map((filteredResponses: any) => filteredResponses.result);
             filteredReceipts.forEach((receipt: any) => {
-                
                 receipt.logs.forEach((log: any) => {
                     //Get all events that correspond to approvals
                     if (ALL_APPROVAL_TOPICS.includes(log.topics[0])) {
@@ -170,7 +169,7 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
                 assetUrl: `${getAddressUrl(chainId)}/${uai.contractAddress}`,
                 spender: formatBytes(decodedEvent?.args[1]),
                 spenderUrl: `${getAddressUrl(chainId)}/${decodedEvent?.args[1]}`,
-                amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? "Unlimited" :Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : ""
+                amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? "Unlimited" : Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : ""
             }
             uai.decodedEvents.push(eventObject);
         };
