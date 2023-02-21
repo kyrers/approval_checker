@@ -44,3 +44,11 @@ button {
   font-family: var(--font-family);
   letter-spacing: 1px;
 }
+
+a {
+  color: white;
+}
+
+a:hover {
+  color: gainsboro;
+}
