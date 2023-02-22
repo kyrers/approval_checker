@@ -14,12 +14,12 @@ export default function MainPanel() {
     const { chain } = useNetwork();
     const { latestBlock, isLoading: isLoadingLatestBlock, isError: isErrorLoadingLatestBlock } = useLatestBlock(chain?.id);
     const { normalTxHashList, isLoading: isLoadingTransactions, isError: isErrorLoadingTransactions } = useNormalTransactionHashList(latestBlock, chain?.id, address);
-    const { erc20Approvals, erc721Approvals, erc1155Approvals, isDecoding, isError: isErrorLoadingApprovals } = useApprovals(chain?.id, normalTxHashList);
+    const { erc20Approvals, erc721Approvals, erc1155Approvals, isDecoding, isError: isErrorLoadingApprovals } = useApprovals(chain?.id ?? 0, address, normalTxHashList);
 
     return (
         <div className={styles.mainPanel}>
             {
-                !isConnected || !supportedChain(chain?.id) ?
+                !isConnected || !supportedChain(chain?.id ?? 0) ?
                     <h3>{connectWalletText}</h3>
                     :
                     isErrorLoadingLatestBlock || isErrorLoadingTransactions || isErrorLoadingApprovals ?

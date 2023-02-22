@@ -14,7 +14,7 @@ type UserApprovalInfo = {
     decodedEvents: any[];
 }
 
-export default function useApprovals(chainId: number, txHashList: any[] | undefined) {
+export default function useApprovals(chainId: number, userAddress: any, txHashList: any[] | undefined) {
     const [isDecoding, setIsDecoding] = useState(true);
     const [contractAddressesToFetch, setContractAddressesToFetch] = useState<any[]>([]);
     // This bool is needed to control when to fetch ABIs, otherwise when any other state variable updated it would try to fetch again, since the abi fetcher useSWR uses state vars as a parameter
@@ -163,8 +163,11 @@ export default function useApprovals(chainId: number, txHashList: any[] | undefi
             let decodedEvent = uai.contract?.interface.parseLog({ topics: log.topics, data: log.data });
             let decimals = uai.contractType === 1 ? await uai.contract?.decimals() : undefined;
 
-            //Zero address is often associated with mint/genesis events and we can ignore these for non ERC20 tokens
-            if (decodedEvent?.args[1] === ethers.constants.AddressZero && uai.contractType !== 1) {
+            /**
+             * Ignore Approval events where user is not the asset owner or where the zero address is the spender and the contract is an ERC721 or ERC1155.
+             * This is because the zero address is often associated with mint/genesis events and we can ignore these for non ERC20 tokens
+             */
+            if (decodedEvent?.args[0] !== userAddress || decodedEvent?.args[1] === ethers.constants.AddressZero && uai.contractType !== 1) {
                 continue;
             }
 
