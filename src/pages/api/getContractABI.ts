@@ -4,8 +4,8 @@ import { setTimeout } from "timers/promises";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
-        const correctAPIKey = getChainAPIKey(req.query.chainId);
-        const partialURL = getContractABIApiUrl(req.query.chainId);
+        const correctAPIKey = getChainAPIKey(Number.parseInt(req.query.chainId?.toString() ?? "0"));
+        const partialURL = getContractABIApiUrl(Number.parseInt(req.query.chainId?.toString() ?? "0"));
 
         const response: any[] = [];
         const addressesList = req.body;

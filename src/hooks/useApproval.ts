@@ -14,7 +14,7 @@ type UserApprovalInfo = {
     decodedEvents: any[];
 }
 
-export default function useApprovals(chainId: any, txHashList: any[] | undefined) {
+export default function useApprovals(chainId: number, txHashList: any[] | undefined) {
     const [isDecoding, setIsDecoding] = useState(true);
     const [contractAddressesToFetch, setContractAddressesToFetch] = useState<any[]>([]);
     // This bool is needed to control when to fetch ABIs, otherwise when any other state variable updated it would try to fetch again, since the abi fetcher useSWR uses state vars as a parameter
@@ -162,6 +162,12 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
         for (let log of uai.logsEmitted) {
             let decodedEvent = uai.contract?.interface.parseLog({ topics: log.topics, data: log.data });
             let decimals = uai.contractType === 1 ? await uai.contract?.decimals() : undefined;
+
+            //Zero address is often associated with mint/genesis events and we can ignore these for non ERC20 tokens
+            if (decodedEvent?.args[1] === ethers.constants.AddressZero && uai.contractType !== 1) {
+                continue;
+            }
+
             let eventObject = {
                 txHash: formatBytes(log.txHash),
                 txUrl: `${getTransactionUrl(chainId)}/${log.txHash}`,
@@ -170,7 +176,8 @@ export default function useApprovals(chainId: any, txHashList: any[] | undefined
                 spender: formatBytes(decodedEvent?.args[1]),
                 spenderUrl: `${getAddressUrl(chainId)}/${decodedEvent?.args[1]}`,
                 amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? "Unlimited" : Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : ""
-            }
+            };
+
             uai.decodedEvents.push(eventObject);
         };
     }
