@@ -133,7 +133,6 @@ export default function useApprovals(chainId: number, userAddress: any, txHashLi
         } else {
             setUserApprovalInfo(_userApprovalInfo);
             setIsDecoding(false);
-            console.log(_userApprovalInfo)
         }
     };
 

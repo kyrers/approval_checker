@@ -6,3 +6,7 @@
     text-align: center;
     color: var(--text-color);
 }
+
+.mainPanel button {
+    color: var(--text-color);
+}
