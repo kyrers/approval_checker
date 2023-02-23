@@ -178,7 +178,9 @@ export default function useApprovals(chainId: number, userAddress: any, txHashLi
                 assetUrl: `${getAddressUrl(chainId)}/${uai.contractAddress}`,
                 spender: formatBytes(decodedEvent?.args[1]),
                 spenderUrl: `${getAddressUrl(chainId)}/${decodedEvent?.args[1]}`,
-                amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? "Unlimited" : Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : ""
+                amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? "Unlimited" : Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : "",
+                //If there is already an event flagged as the current user's approval for this spender, we keep it that way, otherwise this is the most recent approval
+                isCurrentApprovalForSpender: uai.decodedEvents.find(de => de.spender === formatBytes(decodedEvent?.args[1]) && de.isCurrentApprovalForSpender) ? false : true
             };
 
             uai.decodedEvents.push(eventObject);
