@@ -79,13 +79,14 @@ export default function useApprovals(chainId: number, userAddress: any, txList: 
                 receipt.logs.forEach((log: any) => {
                     //Get all events that correspond to approvals
                     if (ALL_APPROVAL_TOPICS.includes(log.topics[0])) {
-                        const date = createDateFromTimestamp(txList?.find(tx => tx.hash === receipt.transactionHash).timestamp * 1000);
+                        const timestamp = txList?.find(tx => tx.hash === receipt.transactionHash).timestamp;
+                        const date = createDateFromTimestamp(timestamp * 1000);
                         const existingObject = _userApprovalInfo.find(uai => uai.contractAddress === log.address);
                         if (existingObject) {
-                            existingObject.logsEmitted.push({ date: date, txHash: receipt.transactionHash, data: log.data, topics: log.topics });
+                            existingObject.logsEmitted.push({ timestamp: timestamp, date: date, txHash: receipt.transactionHash, data: log.data, topics: log.topics });
                         } else {
                             abisToFetch.push(log.address);
-                            _userApprovalInfo.push({ contractName: log.address, contractAddress: log.address, contractABI: undefined, contractType: 0, contract: undefined, logsEmitted: [{ date: date, txHash: receipt.transactionHash, data: log.data, topics: log.topics, blockNumber: log.blockNumber }], decodedEvents: [] })
+                            _userApprovalInfo.push({ contractName: log.address, contractAddress: log.address, contractABI: undefined, contractType: 0, contract: undefined, logsEmitted: [{ timestamp: timestamp, date: date, txHash: receipt.transactionHash, data: log.data, topics: log.topics, blockNumber: log.blockNumber }], decodedEvents: [] })
                         }
                     }
                 })
@@ -172,6 +173,7 @@ export default function useApprovals(chainId: number, userAddress: any, txList: 
             }
 
             let eventObject = {
+                timestamp: log.timestamp,
                 date: log.date,
                 txHash: formatBytes(log.txHash),
                 txUrl: `${getTransactionUrl(chainId)}/${log.txHash}`,
@@ -179,7 +181,7 @@ export default function useApprovals(chainId: number, userAddress: any, txList: 
                 assetUrl: `${getAddressUrl(chainId)}/${uai.contractAddress}`,
                 spender: formatBytes(decodedEvent?.args[1]),
                 spenderUrl: `${getAddressUrl(chainId)}/${decodedEvent?.args[1]}`,
-                amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? "Unlimited" : Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : "",
+                amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? Number.parseFloat(ethers.utils.formatUnits(ethers.constants.MaxUint256, 18)) : Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : "",
                 //If there is already an event flagged as the current user's approval for this spender, we keep it that way, otherwise this is the most recent approval
                 isCurrentApprovalForSpender: uai.decodedEvents.find(de => de.spender === formatBytes(decodedEvent?.args[1]) && de.isCurrentApprovalForSpender) ? false : true
             };

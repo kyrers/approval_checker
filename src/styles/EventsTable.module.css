@@ -2,3 +2,9 @@
     font-family: 'Roboto Bold';
     font-size: 18px;
 }
+
+.eventsTable svg {
+    margin-left: 5px;
+    padding: 3px;
+    cursor: pointer;
+}
