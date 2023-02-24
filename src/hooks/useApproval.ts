@@ -1,5 +1,5 @@
 import { ALL_APPROVAL_TOPICS } from "@/utils/constants";
-import { formatBytes, getAddressUrl, getNetworkKey, getTransactionUrl, supportedChain } from "@/utils/shared";
+import { createDateFromTimestamp, formatBytes, getAddressUrl, getNetworkKey, getTransactionUrl, supportedChain } from "@/utils/shared";
 import { Contract, ethers } from "ethers";
 import { useState } from "react";
 import useSWR from "swr";
@@ -14,7 +14,7 @@ type UserApprovalInfo = {
     decodedEvents: any[];
 }
 
-export default function useApprovals(chainId: number, userAddress: any, txHashList: any[] | undefined) {
+export default function useApprovals(chainId: number, userAddress: any, txList: any[] | undefined) {
     const [isDecoding, setIsDecoding] = useState(true);
     const [contractAddressesToFetch, setContractAddressesToFetch] = useState<any[]>([]);
     // This bool is needed to control when to fetch ABIs, otherwise when any other state variable updated it would try to fetch again, since the abi fetcher useSWR uses state vars as a parameter
@@ -38,7 +38,7 @@ export default function useApprovals(chainId: number, userAddress: any, txHashLi
         return undefined;
     };
 
-    const { error: receiptsError } = useSWR({ url: `api/getTransactionReceiptByHash?chainId=${chainId}`, hashList: txHashList }, receiptsFetcher, {
+    const { error: receiptsError } = useSWR({ url: `api/getTransactionReceiptByHash?chainId=${chainId}`, hashList: txList?.map(tx => tx.hash) }, receiptsFetcher, {
         revalidateIfStale: false,
         revalidateOnFocus: false,
         revalidateOnReconnect: false
@@ -79,12 +79,13 @@ export default function useApprovals(chainId: number, userAddress: any, txHashLi
                 receipt.logs.forEach((log: any) => {
                     //Get all events that correspond to approvals
                     if (ALL_APPROVAL_TOPICS.includes(log.topics[0])) {
+                        const date = createDateFromTimestamp(txList?.find(tx => tx.hash === receipt.transactionHash).timestamp * 1000);
                         const existingObject = _userApprovalInfo.find(uai => uai.contractAddress === log.address);
                         if (existingObject) {
-                            existingObject.logsEmitted.push({ txHash: receipt.transactionHash, data: log.data, topics: log.topics });
+                            existingObject.logsEmitted.push({ date: date, txHash: receipt.transactionHash, data: log.data, topics: log.topics });
                         } else {
                             abisToFetch.push(log.address);
-                            _userApprovalInfo.push({ contractName: log.address, contractAddress: log.address, contractABI: undefined, contractType: 0, contract: undefined, logsEmitted: [{ txHash: receipt.transactionHash, data: log.data, topics: log.topics, blockNumber: log.blockNumber }], decodedEvents: [] })
+                            _userApprovalInfo.push({ contractName: log.address, contractAddress: log.address, contractABI: undefined, contractType: 0, contract: undefined, logsEmitted: [{ date: date, txHash: receipt.transactionHash, data: log.data, topics: log.topics, blockNumber: log.blockNumber }], decodedEvents: [] })
                         }
                     }
                 })
@@ -171,6 +172,7 @@ export default function useApprovals(chainId: number, userAddress: any, txHashLi
             }
 
             let eventObject = {
+                date: log.date,
                 txHash: formatBytes(log.txHash),
                 txUrl: `${getTransactionUrl(chainId)}/${log.txHash}`,
                 asset: uai.contractName,

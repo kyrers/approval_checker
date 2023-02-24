@@ -16,13 +16,13 @@ export default function useNormalTransactionHashList(latestBlock: any, chainId: 
         revalidateOnReconnect: false
     });
 
-    return { normalTxHashList: data ? formatResponse(data.result) : undefined, isLoading, isError: error };
+    return { normalTxList: data ? formatResponse(data.result) : undefined, isLoading, isError: error };
 };
 
 export const formatResponse = (txArray: []) => {
-    let hashArray: string[] = [];
+    let hashArray: any[] = [];
     txArray.forEach((tx: any) => {
-        hashArray.push(tx.hash)
+        hashArray.push({ timestamp: tx.timeStamp, hash: tx.hash })
     });
 
     return hashArray;

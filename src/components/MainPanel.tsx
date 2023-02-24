@@ -13,8 +13,8 @@ export default function MainPanel() {
     const { address, isConnected } = useAccount();
     const { chain } = useNetwork();
     const { latestBlock, isLoading: isLoadingLatestBlock, isError: isErrorLoadingLatestBlock } = useLatestBlock(chain?.id);
-    const { normalTxHashList, isLoading: isLoadingTransactions, isError: isErrorLoadingTransactions } = useNormalTransactionHashList(latestBlock, chain?.id, address);
-    const { erc20Approvals, erc721Approvals, erc1155Approvals, isDecoding, isError: isErrorLoadingApprovals } = useApprovals(chain?.id ?? 0, address, normalTxHashList);
+    const { normalTxList, isLoading: isLoadingTransactions, isError: isErrorLoadingTransactions } = useNormalTransactionHashList(latestBlock, chain?.id, address);
+    const { erc20Approvals, erc721Approvals, erc1155Approvals, isDecoding, isError: isErrorLoadingApprovals } = useApprovals(chain?.id ?? 0, address, normalTxList);
 
     return (
         <div className={styles.mainPanel}>

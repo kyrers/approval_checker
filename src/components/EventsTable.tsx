@@ -1,11 +1,21 @@
+import { useEffect, useState } from "react";
 import styles from "../styles/EventsTable.module.css";
 
 export default function EventsTable({ events, type }: { events: any[], type: number }) {
-    console.log(events)
+    const [approvalData, setApprovalData] = useState(events);
+    const [showMostRecent, setShowMostRecent] = useState(true);
+    const [showCurrentApprovals, setShowCurrentApprovals] = useState(true);
+
+    useEffect(() => {
+    }, [showMostRecent]);
+
+    useEffect(() => {
+    }, [showCurrentApprovals]);
 
     const renderHeaders = () => {
         return (
             <tr key="header_row">
+                <th>Date</th>
                 <th>Transaction</th>
                 <th>Asset</th>
                 <th>Spender</th>
@@ -16,8 +26,9 @@ export default function EventsTable({ events, type }: { events: any[], type: num
 
     const renderRows = () => {
         return (
-            events.map((event: any, index: number) =>
+            approvalData.map((event: any, index: number) =>
                 <tr key={`approval_row_${type}_${index}`}>
+                    <td>{event.date}</td>
                     <td><a href={event.txUrl} target="_blank">{event.txHash}</a></td>
                     <td><a href={event.assetUrl} target="_blank">{event.asset}</a></td>
                     <td><a href={event.spenderUrl} target="_blank">{event.spender}</a></td>
@@ -36,6 +47,5 @@ export default function EventsTable({ events, type }: { events: any[], type: num
                 {renderRows()}
             </tbody>
         </table>
-
     );
 }

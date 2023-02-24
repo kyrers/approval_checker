@@ -8,6 +8,10 @@ export const formatBytes = (hash: string) => {
     return hash.substring(0, 6) + "..." + hash.slice(-4);
 };
 
+export const createDateFromTimestamp = (timestamp: number) => {
+    return new Date(timestamp).toUTCString().replace("GMT", "UTC");
+}
+
 //URLS
 export const getNetworkKey = (chainId: number) => {
     switch (chainId) {
