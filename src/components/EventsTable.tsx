@@ -1,6 +1,8 @@
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
+import { Form } from "react-bootstrap";
 import { ArrowDownUp } from "react-bootstrap-icons";
+import { showFullApprovalHistoryText } from "@/utils/strings";
 import styles from "../styles/EventsTable.module.css";
 
 enum SortBy {
@@ -17,18 +19,23 @@ export default function EventsTable({ events, type }: { events: any[], type: num
     const [approvalData, setApprovalData] = useState(events);
     const [sortBy, setSortBy] = useState<SortBy>(SortBy.Timestamp);
     const [orderDirection, setOrderDirection] = useState<SortDirection>(SortDirection.Desc);
-    const [showCurrentApprovals, setShowCurrentApprovals] = useState(true);
+    const [showFullApprovalHistory, setShowFullApprovalHistory] = useState(false);
 
     useEffect(() => {
-    }, [showCurrentApprovals]);
+        sort(filter());
+    }, [showFullApprovalHistory, sortBy, orderDirection])
 
-    useEffect(() => {
+    const filter = () => {
+        return showFullApprovalHistory ? events : events.filter(event => event.isCurrentApprovalForSpender);
+    }
+
+    const sort = (approvals: any[]) => {
         if (orderDirection === SortDirection.Desc) {
-            setApprovalData([...approvalData].sort((a, b) => b[sortBy] - a[sortBy]));
+            setApprovalData([...approvals].sort((a, b) => b[sortBy] - a[sortBy]));
         } else {
-            setApprovalData([...approvalData].sort((a, b) => a[sortBy] - b[sortBy]));
+            setApprovalData([...approvals].sort((a, b) => a[sortBy] - b[sortBy]));
         }
-    }, [sortBy, orderDirection])
+    }
 
     const handleSort = (sortKey: SortBy) => {
         if (sortBy === sortKey) {
@@ -84,13 +91,24 @@ export default function EventsTable({ events, type }: { events: any[], type: num
     };
 
     return (
-        <table className={`${styles.eventsTable} table table-striped table-dark`}>
-            <thead>
-                {renderHeaders()}
-            </thead>
-            <tbody>
-                {renderRows()}
-            </tbody>
-        </table>
+        <>
+            <Form className={styles.form}>
+                <Form.Check
+                    type="switch"
+                    id="full-approval-history-switch"
+                    label={showFullApprovalHistoryText}
+                    checked={showFullApprovalHistory}
+                    onChange={() => setShowFullApprovalHistory(!showFullApprovalHistory)}
+                />
+            </Form>
+            <table className={`${styles.eventsTable} table table-striped table-dark`}>
+                <thead>
+                    {renderHeaders()}
+                </thead>
+                <tbody>
+                    {renderRows()}
+                </tbody>
+            </table>
+        </>
     );
 }

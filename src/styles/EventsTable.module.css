@@ -8,3 +8,9 @@
     padding: 3px;
     cursor: pointer;
 }
+
+.form {
+    text-align: initial;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
