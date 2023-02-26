@@ -1,6 +1,6 @@
-import { ALL_APPROVAL_TOPICS } from "@/utils/constants";
+import { ALL_APPROVAL_TOPICS, BIGNUMBER_ZER0 } from "@/utils/constants";
 import { createDateFromTimestamp, formatBytes, getAddressUrl, getNetworkKey, getTransactionUrl, supportedChain } from "@/utils/shared";
-import { Contract, ethers } from "ethers";
+import { BigNumber, Contract, ethers } from "ethers";
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -182,12 +182,23 @@ export default function useApprovals(chainId: number, userAddress: any, txList: 
                 spender: formatBytes(decodedEvent?.args[1]),
                 spenderUrl: `${getAddressUrl(chainId)}/${decodedEvent?.args[1]}`,
                 amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? Number.parseFloat(ethers.utils.formatUnits(ethers.constants.MaxUint256, 18)) : Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : "",
-                //If there is already an event flagged as the current user's approval for this spender, we keep it that way, otherwise this is the most recent approval
-                isCurrentApprovalForSpender: uai.decodedEvents.find(de => de.spender === formatBytes(decodedEvent?.args[1]) && de.isCurrentApprovalForSpender) ? false : true
+                isCurrentApprovalForSpender: isCurrentApproval(uai.contractType === 1, decodedEvent?.args[2], formatBytes(decodedEvent?.args[1]), uai.decodedEvents)
             };
+
 
             uai.decodedEvents.push(eventObject);
         };
+    }
+
+    const isCurrentApproval = (isERC20: boolean, amount: any, spender: any, existingEvents: any[]) => {
+        //If there is already an event flagged as the current user's approval for this spender, we keep it that way, otherwise this is the most recent approval
+        const isMostRecentEventForSpender = existingEvents.find(de => de.spender === spender && de.isCurrentApprovalForSpender);
+        if (isERC20) {
+            //Unless it is an ERC20 and the amount is 0, in which case it is not considered a current approval and it will only be displayed in full history mode
+            return amount.eq(BIGNUMBER_ZER0) || isMostRecentEventForSpender ? false : true
+        }
+        
+        return isMostRecentEventForSpender ? false : true;
     }
 
     return {
