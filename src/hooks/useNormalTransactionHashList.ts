@@ -1,7 +1,7 @@
 import { supportedChain } from "@/utils/shared";
 import useSWR from "swr";
 
-export default function useNormalTransactionHashList(latestBlock: any, chainId: any, address: any) {
+export default function useNormalTransactionHashList(latestBlock: any, chainId: number, address: any) {
     const fetcher = (...args: [any]) => {
         if (undefined !== latestBlock && supportedChain(chainId)) {
             return fetch(...args).then((res) => res.json());

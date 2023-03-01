@@ -14,3 +14,17 @@
     margin-top: 5px;
     margin-bottom: 5px;
 }
+
+.eventsTable button {
+    color: black;
+    width: 10rem;
+    height: 1.5rem;
+    background: var(--button-color);
+    border: none;
+    border-radius: calc(var(--buton-border) / 4);
+    cursor: pointer;
+}
+
+.eventsTable button:hover {
+    background: var(--button-hover-color);
+}

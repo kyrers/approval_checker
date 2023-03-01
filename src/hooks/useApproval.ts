@@ -1,6 +1,6 @@
 import { ALL_APPROVAL_TOPICS, BIGNUMBER_ZER0 } from "@/utils/constants";
 import { createDateFromTimestamp, formatBytes, getAddressUrl, getNetworkKey, getTransactionUrl, supportedChain } from "@/utils/shared";
-import { BigNumber, Contract, ethers } from "ethers";
+import { Contract, ethers } from "ethers";
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -14,7 +14,7 @@ type UserApprovalInfo = {
     decodedEvents: any[];
 }
 
-export default function useApprovals(chainId: number, userAddress: any, txList: any[] | undefined) {
+export default function useApprovals(chainId: number, userAddress: any, userSigner: any, txList: any[] | undefined) {
     const [isDecoding, setIsDecoding] = useState(true);
     const [contractAddressesToFetch, setContractAddressesToFetch] = useState<any[]>([]);
     // This bool is needed to control when to fetch ABIs, otherwise when any other state variable updated it would try to fetch again, since the abi fetcher useSWR uses state vars as a parameter
@@ -70,8 +70,8 @@ export default function useApprovals(chainId: number, userAddress: any, txList: 
     });
 
     const fetchContractsABIFromReceipts = (receipts: any[]) => {
-        let _userApprovalInfo: UserApprovalInfo[] = [];
-        let abisToFetch: any[] = [];
+        const _userApprovalInfo: UserApprovalInfo[] = [];
+        const abisToFetch: any[] = [];
 
         if (receipts) {
             let filteredReceipts = receipts.filter((response: any) => response.result.logs.length > 0).map((filteredResponses: any) => filteredResponses.result);
@@ -99,9 +99,8 @@ export default function useApprovals(chainId: number, userAddress: any, txList: 
     };
 
     const createContractInstancesAndDecodeEvents = async (abis: any[]) => {
-        let provider = new ethers.providers.AlchemyProvider(ethers.providers.getNetwork(chainId), getNetworkKey(chainId));
-        let _userApprovalInfo = userApprovalInfo;
-        let proxiedContracts: any[] = [];
+        const _userApprovalInfo = userApprovalInfo;
+        const proxiedContracts: any[] = [];
 
         if (abis) {
             for (let abi of abis) {
@@ -109,7 +108,7 @@ export default function useApprovals(chainId: number, userAddress: any, txList: 
 
                 if (existingObject) {
                     existingObject.contractABI = abi.data.result;
-                    existingObject.contract = new Contract(existingObject.contractAddress, existingObject.contractABI, provider);
+                    existingObject.contract = new Contract(existingObject.contractAddress, existingObject.contractABI, userSigner);
                     existingObject.contractType = await determineContractType(existingObject);
                     if (existingObject.contractType === -1) {
                         proxiedContracts.push(existingObject.contractAddress)
@@ -144,9 +143,8 @@ export default function useApprovals(chainId: number, userAddress: any, txList: 
      */
     const determineContractType = async (uai: UserApprovalInfo) => {
         try {
-            let contractFragments = uai.contract?.interface.fragments.map(f => f.name) ?? [];
-            //console.log("CONTRACT ", uai.contractAddress, contractFragments)
-            let type = contractFragments.includes("safeBatchTransferFrom") ? 3 : contractFragments.includes("setApprovalForAll") ? 2 : contractFragments.includes("approve") ? 1 : contractFragments.includes("implementation") ? -1 : 0;
+            const contractFragments = uai.contract?.interface.fragments.map(f => f.name) ?? [];
+            const type = contractFragments.includes("safeBatchTransferFrom") ? 3 : contractFragments.includes("setApprovalForAll") ? 2 : contractFragments.includes("approve") ? 1 : contractFragments.includes("implementation") ? -1 : 0;
 
             if (-1 === type) {
                 //Update the UserApprovalInfo object to the address of the implementation so we can refetch the ABI and get the implementation contract
@@ -161,18 +159,20 @@ export default function useApprovals(chainId: number, userAddress: any, txList: 
 
     const decodeEvents = async (uai: UserApprovalInfo) => {
         for (let log of uai.logsEmitted) {
-            let decodedEvent = uai.contract?.interface.parseLog({ topics: log.topics, data: log.data });
-            let decimals = uai.contractType === 1 ? await uai.contract?.decimals() : undefined;
+            const decodedEvent = uai.contract?.interface.parseLog({ topics: log.topics, data: log.data });
 
             /**
              * Ignore Approval events where user is not the asset owner or where the zero address is the spender and the contract is an ERC721 or ERC1155.
              * This is because the zero address is often associated with mint/genesis events and we can ignore these for non ERC20 tokens
-             */
+            */
             if (decodedEvent?.args[0] !== userAddress || decodedEvent?.args[1] === ethers.constants.AddressZero && uai.contractType !== 1) {
                 continue;
             }
 
-            let eventObject = {
+            const decimals = uai.contractType === 1 ? await uai.contract?.decimals() : undefined;
+            const isCurrentApprovalForSpender = isCurrentApproval(uai.contractType === 1, decodedEvent?.args[2], formatBytes(decodedEvent?.args[1]), uai.decodedEvents);
+
+            const eventObject = {
                 timestamp: log.timestamp,
                 date: log.date,
                 txHash: formatBytes(log.txHash),
@@ -182,7 +182,8 @@ export default function useApprovals(chainId: number, userAddress: any, txList: 
                 spender: formatBytes(decodedEvent?.args[1]),
                 spenderUrl: `${getAddressUrl(chainId)}/${decodedEvent?.args[1]}`,
                 amount: decimals ? decodedEvent?.args[2].eq(ethers.constants.MaxUint256) ? Number.parseFloat(ethers.utils.formatUnits(ethers.constants.MaxUint256, 18)) : Number.parseFloat(ethers.utils.formatUnits(decodedEvent?.args[2], decimals)) : "",
-                isCurrentApprovalForSpender: isCurrentApproval(uai.contractType === 1, decodedEvent?.args[2], formatBytes(decodedEvent?.args[1]), uai.decodedEvents)
+                isCurrentApprovalForSpender: isCurrentApprovalForSpender,
+                revokeFunction: isCurrentApprovalForSpender ? determineRevokeFunction(uai.contractType === 1, uai.contract, decodedEvent?.args[1]) : undefined
             };
 
 
@@ -197,8 +198,15 @@ export default function useApprovals(chainId: number, userAddress: any, txList: 
             //Unless it is an ERC20 and the amount is 0, in which case it is not considered a current approval and it will only be displayed in full history mode
             return amount.eq(BIGNUMBER_ZER0) || isMostRecentEventForSpender ? false : true
         }
-        
+
         return isMostRecentEventForSpender ? false : true;
+    }
+
+    const determineRevokeFunction = (isERC20: boolean, contract: Contract | undefined, spender: any) => {
+        if (contract) {
+            return isERC20 ? () => contract.approve(spender, 0) : () => contract.setApprovalForAll(spender, false);
+        }
+        return undefined;
     }
 
     return {

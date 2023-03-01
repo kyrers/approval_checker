@@ -1,6 +1,6 @@
 import styles from "../styles/MainPanel.module.css";
 import { Tab, Tabs } from "react-bootstrap";
-import { useAccount, useNetwork } from "wagmi";
+import { useAccount, useNetwork, useSigner } from "wagmi";
 import { connectWalletText, errorText } from "@/utils/strings";
 import { supportedChain } from "@/utils/shared";
 import useLatestBlock from "@/hooks/useLatestBlock";
@@ -12,9 +12,10 @@ import EventsTable from "./EventsTable";
 export default function MainPanel() {
     const { address, isConnected } = useAccount();
     const { chain } = useNetwork();
-    const { latestBlock, isLoading: isLoadingLatestBlock, isError: isErrorLoadingLatestBlock } = useLatestBlock(chain?.id);
-    const { normalTxList, isLoading: isLoadingTransactions, isError: isErrorLoadingTransactions } = useNormalTransactionHashList(latestBlock, chain?.id, address);
-    const { erc20Approvals, erc721Approvals, erc1155Approvals, isDecoding, isError: isErrorLoadingApprovals } = useApprovals(chain?.id ?? 0, address, normalTxList);
+    const { data: signer } = useSigner();
+    const { latestBlock, isLoading: isLoadingLatestBlock, isError: isErrorLoadingLatestBlock } = useLatestBlock(chain?.id ?? 0);
+    const { normalTxList, isLoading: isLoadingTransactions, isError: isErrorLoadingTransactions } = useNormalTransactionHashList(latestBlock, chain?.id ?? 0, address);
+    const { erc20Approvals, erc721Approvals, erc1155Approvals, isDecoding, isError: isErrorLoadingApprovals } = useApprovals(chain?.id ?? 0, address, signer, normalTxList);
 
     return (
         <div className={styles.mainPanel}>

@@ -85,6 +85,15 @@ export default function EventsTable({ events, type }: { events: any[], type: num
                     <td><a href={event.assetUrl} target="_blank">{event.asset}</a></td>
                     <td><a href={event.spenderUrl} target="_blank">{event.spender}</a></td>
                     {type === 1 ? <td>{formatAmount(event.amount)}</td> : null}
+                    {
+                        event.revokeFunction ?
+                            <td>
+                                <button onClick={event.revokeFunction}>
+                                    Revoke
+                                </button>
+                            </td>
+                            : null
+                    }
                 </tr>
             )
         );

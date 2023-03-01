@@ -2,7 +2,7 @@ import { supportedChain } from "@/utils/shared";
 import { BigNumber } from "ethers";
 import useSWR from "swr";
 
-export default function useLatestBlock(chainId: any) {
+export default function useLatestBlock(chainId: number) {
     const fetcher = (...args: [any]) => {
         if (supportedChain(chainId)) {
             return fetch(...args).then((res) => res.json());
