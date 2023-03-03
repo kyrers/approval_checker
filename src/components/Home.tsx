@@ -3,6 +3,7 @@ import { useState } from "react";
 import WalletSelector from "./WalletSelector";
 import Header from "./Header";
 import MainPanel from "./MainPanel";
+import AlertScreen from "./AlertScreen";
 
 export default function Home() {
     const [showAlert, setShowAlert] = useState(false);
@@ -18,10 +19,8 @@ export default function Home() {
         <div className={styles.home}>
             {showWalletSelector ? <WalletSelector setShowWalletSelector={setShowWalletSelector} displayAlert={displayAlert} /> : null}
             <Header setShowWalletSelector={setShowWalletSelector} />
-            <MainPanel />
-            {/*<MainPanel displayAlert={displayAlert} />
-          <AlertScreen show={showAlert} element={alertElement} setShow={setShowAlert} />
-    <Footer />*/}
+            <MainPanel displayAlert={displayAlert} />
+            <AlertScreen show={showAlert} element={alertElement} setShow={setShowAlert} />
         </div>
     );
 }

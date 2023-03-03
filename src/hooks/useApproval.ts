@@ -1,3 +1,4 @@
+import { loadingElement, transactionFailedElement, transactionSuccessElement } from "@/components/AlertScreen";
 import { ALL_APPROVAL_TOPICS, BIGNUMBER_ZER0 } from "@/utils/constants";
 import { createDateFromTimestamp, formatBytes, getAddressUrl, getNetworkKey, getTransactionUrl, supportedChain } from "@/utils/shared";
 import { Contract, ethers } from "ethers";
@@ -14,7 +15,7 @@ type UserApprovalInfo = {
     decodedEvents: any[];
 }
 
-export default function useApprovals(chainId: number, userAddress: any, userSigner: any, txList: any[] | undefined) {
+export default function useApprovals(chainId: number, userAddress: any, userSigner: any, txList: any[] | undefined, displayAlert: (element: JSX.Element) => void) {
     const [isDecoding, setIsDecoding] = useState(true);
     const [contractAddressesToFetch, setContractAddressesToFetch] = useState<any[]>([]);
     // This bool is needed to control when to fetch ABIs, otherwise when any other state variable updated it would try to fetch again, since the abi fetcher useSWR uses state vars as a parameter
@@ -204,9 +205,48 @@ export default function useApprovals(chainId: number, userAddress: any, userSign
 
     const determineRevokeFunction = (isERC20: boolean, contract: Contract | undefined, spender: any) => {
         if (contract) {
-            return isERC20 ? () => contract.approve(spender, 0) : () => contract.setApprovalForAll(spender, false);
+            return isERC20 ? () => revokeERC20Approval(contract, spender) : () => revokeERC721orERC1155Approval(contract, spender);
         }
         return undefined;
+    }
+
+    const revokeERC20Approval = async (contract: Contract | undefined, spender: any) => {
+        displayAlert(loadingElement("Revoking"));
+
+        try {
+            let revokeTx = await contract?.approve(spender, 0);
+            let revokeReceipt = await revokeTx.wait();
+
+            if (1 === revokeReceipt.status) {
+                displayAlert(transactionSuccessElement("Transaction succeeded", `${getTransactionUrl(chainId)}/${revokeReceipt.transactionHash})`));
+            }
+            
+        } catch (error: any) {
+            if (error.code === "ACTION_REJECTED") {
+                displayAlert(transactionFailedElement("Please accept the transaction."));
+            } else {
+                displayAlert(transactionFailedElement("Something went wrong. Please try again."));
+            }
+        }
+    }
+
+    const revokeERC721orERC1155Approval = async (contract: Contract | undefined, spender: any) => {
+        displayAlert(loadingElement("Revoking"));
+        try {
+            let revokeTx = await contract?.setApprovalForAll(spender, false);;
+            let revokeReceipt = await revokeTx.wait();
+
+            if (1 === revokeReceipt.status) {
+                displayAlert(transactionSuccessElement("Transaction succeeded", `${getTransactionUrl(chainId)}/${revokeReceipt.transactionHash})`));
+            }
+
+        } catch (error: any) {
+            if (error.code === "ACTION_REJECTED") {
+                displayAlert(transactionFailedElement("Please accept the transaction."));
+            } else {
+                displayAlert(transactionFailedElement("Something went wrong. Please try again."));
+            }
+        }
     }
 
     return {

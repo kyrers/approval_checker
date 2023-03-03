@@ -9,13 +9,17 @@ import useApprovals from "@/hooks/useApproval";
 import LoadingScreen from "./LoadingScreen";
 import EventsTable from "./EventsTable";
 
-export default function MainPanel() {
+type FunctionProps = {
+    displayAlert: (element: JSX.Element) => void;
+};
+
+export default function MainPanel({ displayAlert }: FunctionProps) {
     const { address, isConnected } = useAccount();
     const { chain } = useNetwork();
     const { data: signer } = useSigner();
     const { latestBlock, isLoading: isLoadingLatestBlock, isError: isErrorLoadingLatestBlock } = useLatestBlock(chain?.id ?? 0);
     const { normalTxList, isLoading: isLoadingTransactions, isError: isErrorLoadingTransactions } = useNormalTransactionHashList(latestBlock, chain?.id ?? 0, address);
-    const { erc20Approvals, erc721Approvals, erc1155Approvals, isDecoding, isError: isErrorLoadingApprovals } = useApprovals(chain?.id ?? 0, address, signer, normalTxList);
+    const { erc20Approvals, erc721Approvals, erc1155Approvals, isDecoding, isError: isErrorLoadingApprovals } = useApprovals(chain?.id ?? 0, address, signer, normalTxList, displayAlert);
 
     return (
         <div className={styles.mainPanel}>
