@@ -201,43 +201,24 @@ export default function useApprovals(chainId: number, userAddress: any, userSign
         }
 
         return isMostRecentEventForSpender ? false : true;
-    }
+    };
 
     const determineRevokeFunction = (isERC20: boolean, contract: Contract | undefined, spender: any) => {
         if (contract) {
-            return isERC20 ? () => revokeERC20Approval(contract, spender) : () => revokeERC721orERC1155Approval(contract, spender);
+            return () => revokeApproval(isERC20, contract, spender);
         }
         return undefined;
-    }
+    };
 
-    const revokeERC20Approval = async (contract: Contract | undefined, spender: any) => {
+    const revokeApproval = async (isERC20: boolean, contract: Contract | undefined, spender: any) => {
         displayAlert(loadingElement("Revoking"));
 
         try {
-            let revokeTx = await contract?.approve(spender, 0);
+            let revokeTx = isERC20 ? await contract?.approve(spender, 0) : await contract?.setApprovalForAll(spender, false);
             let revokeReceipt = await revokeTx.wait();
 
             if (1 === revokeReceipt.status) {
-                displayAlert(transactionSuccessElement("Transaction succeeded", `${getTransactionUrl(chainId)}/${revokeReceipt.transactionHash})`));
-            }
-            
-        } catch (error: any) {
-            if (error.code === "ACTION_REJECTED") {
-                displayAlert(transactionFailedElement("Please accept the transaction."));
-            } else {
-                displayAlert(transactionFailedElement("Something went wrong. Please try again."));
-            }
-        }
-    }
-
-    const revokeERC721orERC1155Approval = async (contract: Contract | undefined, spender: any) => {
-        displayAlert(loadingElement("Revoking"));
-        try {
-            let revokeTx = await contract?.setApprovalForAll(spender, false);;
-            let revokeReceipt = await revokeTx.wait();
-
-            if (1 === revokeReceipt.status) {
-                displayAlert(transactionSuccessElement("Transaction succeeded", `${getTransactionUrl(chainId)}/${revokeReceipt.transactionHash})`));
+                displayAlert(transactionSuccessElement("Transaction succeeded. You will need to reload to update the table.", `${getTransactionUrl(chainId)}/${revokeReceipt.transactionHash})`));
             }
 
         } catch (error: any) {
@@ -247,7 +228,7 @@ export default function useApprovals(chainId: number, userAddress: any, userSign
                 displayAlert(transactionFailedElement("Something went wrong. Please try again."));
             }
         }
-    }
+    };
 
     return {
         erc20Approvals: userApprovalInfo.filter(uai => uai.contractType === 1),
