@@ -68,6 +68,7 @@ export default function EventsTable({ events, type }: { events: any[], type: num
                         </th>
                         : null
                 }
+                <th />
             </tr>
         );
     };
@@ -100,7 +101,7 @@ export default function EventsTable({ events, type }: { events: any[], type: num
     };
 
     return (
-        <>
+        <div className={styles.tabContent}>
             <Form className={styles.form}>
                 <Form.Check
                     type="switch"
@@ -118,6 +119,6 @@ export default function EventsTable({ events, type }: { events: any[], type: num
                     {renderRows()}
                 </tbody>
             </table>
-        </>
+        </div>
     );
 }
