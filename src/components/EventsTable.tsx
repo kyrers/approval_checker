@@ -93,7 +93,7 @@ export default function EventsTable({ events, type }: { events: any[], type: num
                                     Revoke
                                 </button>
                             </td>
-                            : null
+                            : <td />
                     }
                 </tr>
             )
