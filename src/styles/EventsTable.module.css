@@ -2,6 +2,11 @@
     max-width: var(--max-width);
     width: 100%;
     overflow: auto;
+    max-height: calc(85vh - 200px);
+}
+
+.eventsTable {
+    margin: 0;
 }
 
 .eventsTable thead {

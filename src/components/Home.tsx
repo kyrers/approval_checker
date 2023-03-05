@@ -4,6 +4,7 @@ import WalletSelector from "./WalletSelector";
 import Header from "./Header";
 import MainPanel from "./MainPanel";
 import AlertScreen from "./AlertScreen";
+import Footer from "./Footer";
 
 export default function Home() {
     const [showAlert, setShowAlert] = useState(false);
@@ -21,6 +22,7 @@ export default function Home() {
             <Header setShowWalletSelector={setShowWalletSelector} />
             <MainPanel displayAlert={displayAlert} />
             <AlertScreen show={showAlert} element={alertElement} setShow={setShowAlert} />
+            <Footer />
         </div>
     );
 }

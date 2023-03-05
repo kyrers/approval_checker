@@ -23,6 +23,8 @@
   --button-color: linear-gradient(97.42deg, #8ebaa4, #45bcbc 94.24%);
   --button-hover-color: linear-gradient(194.84deg, #8ebaa4, #45bcbc 94.24%);
   --buton-border: 32px;
+
+  --footer-svg-fill: white;
 }
 
 * {
@@ -61,7 +63,8 @@ a:hover {
 
 /* Works on Chrome, Edge, and Safari */
 *::-webkit-scrollbar {
-  width: 10px;
+  width: 5px;
+  height: 5px;
 }
 
 *::-webkit-scrollbar-track {
