@@ -9,7 +9,7 @@ Connect your wallet to:
 
 A couple of things to note:
 - Only Mainnet and Optimism are implemented, but it is trivial to add another network;
-- Approval amounts that are gigantic and close to unlimited, but not quite equal `type(uint256).max` are still treated as unlimited.
+- Approval amounts that are gigantic and close to unlimited, but not quite equal to `type(uint256).max` are still treated as unlimited.
 - You'll be using your own Etherscan API keys. This is prepared for the free plan version and works around the rate limits. Incidentally, this is why the app is not deployed on vercel or netlify - they have 10s timeouts on their free plans, which is not enough for some of the requests we make.
 
 ### Run this application
