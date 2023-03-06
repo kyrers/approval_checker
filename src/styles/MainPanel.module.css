@@ -10,3 +10,21 @@
 .mainPanel button {
     color: var(--text-color);
 }
+
+@media(max-width: 345px) {
+    .mainPanel {
+        margin-top: 4rem;
+    }
+}
+
+@media(max-width: 330px) {
+    .mainPanel {
+        margin-top: 6rem;
+    }
+}
+
+@media(max-width: 325px) {
+    .mainPanel {
+        margin-top: 8rem;
+    }
+}
