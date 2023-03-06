@@ -23,6 +23,8 @@ export default function EventsTable({ events, type }: { events: any[], type: num
 
     useEffect(() => {
         sort(filter());
+            
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showFullApprovalHistory, sortBy, orderDirection])
 
     const filter = () => {
@@ -82,9 +84,9 @@ export default function EventsTable({ events, type }: { events: any[], type: num
             approvalData.map((event: any, index: number) =>
                 <tr key={`approval_row_${type}_${index}`}>
                     <td>{event.date}</td>
-                    <td><a href={event.txUrl} target="_blank">{event.txHash}</a></td>
-                    <td><a href={event.assetUrl} target="_blank">{event.asset}</a></td>
-                    <td><a href={event.spenderUrl} target="_blank">{event.spender}</a></td>
+                    <td><a href={event.txUrl} target="_blank" rel="noopener noreferrer">{event.txHash}</a></td>
+                    <td><a href={event.assetUrl} target="_blank" rel="noopener noreferrer">{event.asset}</a></td>
+                    <td><a href={event.spenderUrl} target="_blank" rel="noopener noreferrer">{event.spender}</a></td>
                     {type === 1 ? <td>{formatAmount(event.amount)}</td> : null}
                     {
                         event.revokeFunction ?
